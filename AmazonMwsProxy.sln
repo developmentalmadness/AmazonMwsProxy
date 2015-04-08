@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AmazonMwsProxy", "AmazonMwsProxy.fsproj", "{E131AB78-F6ED-448C-9230-A6E0841B9A44}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AmazonMwsProxy", "AmazonMwsProxy\AmazonMwsProxy.fsproj", "{E131AB78-F6ED-448C-9230-A6E0841B9A44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
