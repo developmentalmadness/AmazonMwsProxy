@@ -24,6 +24,10 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\Tests.XML</DocumentationFile>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(SolutionDir)packages\xunit.runner.console.2.0.0\tools\xunit.console.exe</StartProgram>
+    <StartWorkingDirectory>$(TargetDir)</StartWorkingDirectory>
+    <StartArguments>Tests.dll</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -83,6 +87,13 @@
       <HintPath>..\packages\xunit.extensibility.core.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
       <Private>True</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AmazonMwsProxy\AmazonMwsProxy.fsproj">
+      <Name>AmazonMwsProxy</Name>
+      <Project>{e131ab78-f6ed-448c-9230-a6e0841b9a44}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

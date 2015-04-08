@@ -16,10 +16,10 @@ module MwsUtil =
 
     let cleanWS (str:string) =
         let data = StringBuilder()
-        str |> String.iteri (fun idx ch ->
+        str.Trim() |> String.iteri (fun idx ch ->
                         match (idx, ch) with
                         | (0, c) -> data.Append(c) |> ignore
-                        | (i, ' ') -> if str.[i - 1] <> ' ' then data.Append(' ') |> ignore
+                        | (i, ' ') -> if data.[data.Length - 1] <> ' ' then data.Append(' ') |> ignore
                         | (_, c) -> data.Append(c) |> ignore
                     )
         data.ToString()
