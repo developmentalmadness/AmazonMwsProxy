@@ -152,7 +152,6 @@ module MwsUtilFixture =
                                     secret
         let expected = "cEwITdwUQQTpJ4xDx4Ud9Hx2iCF4d094LFcdZffT1Jw=" 
         test <@ Some expected = actual @>
-        
         (* or another way...
 
         test <@ match actual with 
