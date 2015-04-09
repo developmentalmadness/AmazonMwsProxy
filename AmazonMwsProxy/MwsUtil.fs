@@ -43,7 +43,6 @@ module MwsUtil =
 
         data.ToString()
 
-    // TODO: write tests to compare C# output (original impl) with F# output
     let escapeAppName (str:string) =
         StringBuilder(str)
             .Replace("\\", "\\\\")

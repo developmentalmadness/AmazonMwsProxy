@@ -150,5 +150,12 @@ module MwsUtilFixture =
                                     ("MWSAuthToken","A1B2C3D4E5F6G7H8I9J0"); 
                                     ("Version","2011-10-01"); ]
                                     secret
+        let expected = "cEwITdwUQQTpJ4xDx4Ud9Hx2iCF4d094LFcdZffT1Jw=" 
+        test <@ Some expected = actual @>
+        
+        (* or another way...
 
-        test <@ "cEwITdwUQQTpJ4xDx4Ud9Hx2iCF4d094LFcdZffT1Jw=" = actual.Value @>
+        test <@ match actual with 
+                | Some v -> v = expected
+                | None -> false @>
+        *)

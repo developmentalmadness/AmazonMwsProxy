@@ -52,7 +52,7 @@
     <Content Include="packages.config" />
     <Compile Include="Logging.fs" />
     <Compile Include="MwsUtil.fs" />
-    <Compile Include="MwsAQCall.fs" />
+    <Compile Include="MwsRequest.fs" />
     <Compile Include="AmazonMws.fs" />
   </ItemGroup>
   <ItemGroup>
