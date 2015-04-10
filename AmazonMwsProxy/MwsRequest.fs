@@ -1,5 +1,60 @@
 ﻿namespace dvMENTALmadness.amazon.client
 
+module Binding =
+    let strToInt str =
+        match System.Int32.TryParse(str) with
+        | (true, i) -> Some i
+        | (false, _) -> None
+
+    // using bind
+    let bind (m, f) =
+        Option.bind f m
+    
+    let return' x = Some x
+
+    let strToIntWorkflow x y z =
+        bind (x |> strToInt, fun a ->
+        bind (y |> strToInt, fun b ->
+        bind (z |> strToInt, fun c ->
+            let d = a + b + c
+            return' d
+        )))
+
+    let good = strToIntWorkflow "1" "2" "3"
+    let bad = strToIntWorkflow "1" "two" "3"
+
+    // using computation expression
+    type MaybeBuilder() =
+        member this.Bind(m, f) = Option.bind f m
+        member this.Return(x) = Some x
+
+    let maybe = new MaybeBuilder()
+    
+    let strToIntWorkflow' x y z =
+        maybe {
+            let! a = strToInt x
+            let! b = strToInt y
+            let! c = strToInt z
+            return a + b + c
+        }
+
+    let good' = strToIntWorkflow' "1" "2" "3"
+    let bad' = strToIntWorkflow' "1" "two" "3"
+
+    // using infix operator
+    let (>>=) m f = Option.bind f m
+
+    let strAdd str i =
+        match strToInt str with
+        | None -> None
+        | Some i' -> Some(i' + i)
+
+    let strToIntWorkflow'' x y z =
+        x |> strToInt >>= strAdd y >>= strAdd z
+
+    let good'' = strToIntWorkflow'' "1" "2" "3"
+    let bad'' = strToIntWorkflow'' "1" "two" "3"
+
 module Request =
     open System
     open System.Text
@@ -133,8 +188,6 @@ module Request =
         
         let buffer = Encoding.UTF8.GetBytes(queryString)
 
-        // retryBuilder ??
-
         try
             let http = getHttpClient config
             use client = http.GetRequestStream()
@@ -174,26 +227,8 @@ module Request =
                 reraise()
         )
 
-    // convertQueryStringToByteArray
-    // 
-
-
-    let rec toParamList fn args state =
-        match args with
-        | [] -> state
-        | head::tail -> 
-            state 
-                |> (fn head)
-                |> List.fold (fun acc elem -> elem::acc) state
-                |> toParamList fn tail
-
-    let rec unmapList (prefix:string) target (idx:int) (ids:string list) =
-        match ids with
-        | [] -> target
-        | head::tail -> 
-            let p = (System.String.Concat(prefix, '.', idx), head)::target
-            let nidx = idx + 1
-            unmapList prefix p nidx tail
+    let unmapList prefix (ids:string list) =
+        List.mapi (fun i e -> sprintf "%s.%d" prefix i, e) ids
 
 
 module Products =
@@ -201,9 +236,7 @@ module Products =
     let SERVICE_VERSION = "2011-10-01"
     [<Literal>]
     let DEFAULT_SERVICE_PATH = "Products/2011-10-01"
-
-
-
+        
     type IdType = ASIN | GCID | SellerSKU | UPC | EAN | ISBN | JAN
 
     // GetCompetitivePricingForASINRequest
@@ -215,15 +248,16 @@ module Products =
         | Action of string
         | Version of string
 
-    let unmapP elem state = 
-        match elem with
+    let unmapP list state = 
+        let um = function
             | P.MarketplaceId m -> [("MarketplaceId", m)]
             | P.SellerId s -> [("SellerId", s)]
-            | P.ASINList ids -> ids |> Request.unmapList "ASINList.ASIN" state 1
+            | P.ASINList ids -> ids |> Request.unmapList "ASINList.ASIN"
             | P.MWSAuthToken t -> [("MWSAuthToken", t)]
             | P.Action a -> [("Action", a)]
             | P.Version v -> [("Version", v)]
-    
+        List.map um list
+
     let getCompetitivePricingForASINRequest marketplaceId sellerId asinList mwsAuthToken =
         [P.MarketplaceId marketplaceId; P.SellerId sellerId; P.ASINList asinList; 
             P.MWSAuthToken mwsAuthToken; P.Action "GetCompetitivePricingForASIN"; P.Version SERVICE_VERSION]
@@ -238,29 +272,25 @@ module Products =
         | Action of string
         | Version of string
 
-    let unmapM elem state = 
-        match elem with
+    let unmapM args state = 
+        let um = function
             | M.MarketplaceId m -> [("MarketplaceId", m)]
             | M.SellerId s -> [("SellerId", s)]
             | M.IdType t -> [("IdType", sprintf "%A" t)]
-            | M.IdList ids -> ids |> Request.unmapList "ListId.Id" state 1
+            | M.IdList ids -> ids |> Request.unmapList "ListId.Id"
             | M.MWSAuthToken t -> [("MWSAuthToken", t)]
             | M.Action a -> [("Action", a)]
             | M.Version v -> [("Version", v)]
+        List.map um args
 
     let getMatchingProductForIdRequest marketplaceId sellerId idType idList mwsAuthToken =
         [M.MarketplaceId marketplaceId; M.SellerId sellerId; M.IdType idType; M.IdList idList; 
             M.MWSAuthToken mwsAuthToken; M.Action "GetMatchingProductForId"; M.Version SERVICE_VERSION]
-(*    
+(*
+    // for additional improvements see: http://stackoverflow.com/questions/29545727/f-higher-order-functions-on-discrete-unions/29567324#29567324
     let argM = getMatchingProductForIdRequest "mpid" "sId" ASIN ["Key1"; "Key2"; "Key3"; "Key4"; "Key5"] "mwstoken"
     let argP = getCompetitivePricingForASINRequest "mpid" "sId" ["Key1"; "Key2"; "Key3"; "Key4"; "Key5"] "mwstoken"
 
-    let toM args =
-        Request.toParamList unmapM args [] 
-    let toP args =
-        Request.toParamList unmapP args []
-        
-    let test = toM argM
-    let test' = toP argP
-
+    let test = unmapM argM []
+    let test' = unmapP argP []
 *)

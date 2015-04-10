@@ -1,5 +1,6 @@
 ﻿namespace dvMENTALmadness.amazon.client
 
+// adapted from: http://viralfsharp.com/2012/03/17/retry-monad-an-implementation/
 module Retry =
     open System.Threading
     open System
@@ -22,7 +23,8 @@ module Retry =
                     try
                         f retryParams
                     with 
-                    | e -> Thread.Sleep(retryParams.waitBetweenRetries); execWithRetry f (i + 1) e
+                    | e -> Thread.Sleep(retryParams.waitBetweenRetries); 
+                            execWithRetry f (i + 1) e
             execWithRetry f 0 (Exception())
             ) 
 
@@ -41,7 +43,46 @@ module Retry =
 
         member this.Delay(f : unit -> RetryMonad<'a>) = f ()
 
+        member this.ReturnFrom(x : 'a) = x
+
+        member private this.TryFinally (computation, compensation) =
+            fun retryParams ->
+                try
+                    this.ReturnFrom(computation retryParams)
+                finally
+                    compensation()
+
+        member this.Using (disposable:#System.IDisposable, body) =
+            let body' = fun retryParams -> body disposable
+            rm (this.TryFinally(body', fun () -> 
+                match disposable with 
+                    | null -> () 
+                    | disp -> disp.Dispose()))
+
+        member this.Zero() = this.Return
+
     let retry = RetryBuilder()
+
+    let fn1 (x:float) (y:float) = rm (fun rp -> x * y)
+    let fn2 (x:float) (y:float) = rm (fun rp -> if y = 0. then raise (invalidArg "y" "cannot be 0") else x / y)
+
+    let retryParams = {maxRetries = 3; waitBetweenRetries = 100}
+
+    let run =
+        try
+            let ym = 
+                retry {
+                    let! a = fn1 7. 5.
+                    let! b = fn1 a a
+                    let! c = fn2 b 0.
+                    return c
+                }
+ 
+            sprintf "%A" (ym retryParams)
+        with 
+            e -> e.Message
+        
+    let r = run    
 
 // consider posting on: http://codereview.stackexchange.com/
 module MwsUtil =
